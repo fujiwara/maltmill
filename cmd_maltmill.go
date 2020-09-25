@@ -6,13 +6,15 @@ import (
 	"io"
 	"os"
 
+	"github.com/Masterminds/semver"
 	"github.com/google/go-github/github"
 	"golang.org/x/sync/errgroup"
 )
 
 type cmdMaltmill struct {
-	files     []string
-	overwrite bool
+	files      []string
+	overwrite  bool
+	newVersion string
 
 	writer io.Writer
 
@@ -37,7 +39,14 @@ func (mm *cmdMaltmill) processFile(ctx context.Context, f string) error {
 	if err != nil {
 		return err
 	}
-	updated, err := fo.update(ctx, mm.ghcli)
+	var newVer *semver.Version
+	if mm.newVersion != "" {
+		newVer, err = semver.NewVersion(mm.newVersion)
+		if err != nil {
+			return err
+		}
+	}
+	updated, err := fo.update(ctx, mm.ghcli, newVer)
 	if err != nil {
 		return err
 	}

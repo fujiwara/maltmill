@@ -57,6 +57,7 @@ Commands:
 	var token string
 	fs.StringVar(&token, "token", os.Getenv(envGitHubToken), "github `token")
 	fs.BoolVar(&mm.overwrite, "w", false, "write result to (source) file instead of stdout")
+	fs.StringVar(&mm.newVersion, "v", "", "specify a new version")
 
 	err := fs.Parse(args)
 	if err != nil {

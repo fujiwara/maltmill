@@ -87,21 +87,31 @@ func expandStr(str string, m map[string]string) (string, error) {
 	return str, nil
 }
 
-func (fo *formula) update(ctx context.Context, ghcli *github.Client) (updated bool, err error) {
+func (fo *formula) update(ctx context.Context, ghcli *github.Client, newVer *semver.Version) (updated bool, err error) {
 	origVer, err := semver.NewVersion(fo.version)
 	if err != nil {
 		return false, errors.Wrap(err, "invalid original version")
 	}
 
-	rele, resp, err := ghcli.Repositories.GetLatestRelease(ctx, fo.owner, fo.repo)
-	if err != nil {
-		return false, errors.Wrapf(err, "update formula failed: %s", fo.fname)
-	}
-	resp.Body.Close()
+	var rele *github.RepositoryRelease
+	var resp *github.Response
+	if newVer != nil {
+		rele, resp, err = ghcli.Repositories.GetReleaseByTag(ctx, fo.owner, fo.repo, "v"+newVer.String())
+		if err != nil {
+			return false, errors.Wrapf(err, "update formula failed: %s", fo.fname)
+		}
+		resp.Body.Close()
+	} else {
+		rele, resp, err = ghcli.Repositories.GetLatestRelease(ctx, fo.owner, fo.repo)
+		if err != nil {
+			return false, errors.Wrapf(err, "update formula failed: %s", fo.fname)
+		}
+		resp.Body.Close()
 
-	newVer, err := semver.NewVersion(rele.GetTagName())
-	if err != nil {
-		return false, errors.Wrapf(err, "invalid original version. formula: %s", fo.fname)
+		newVer, err = semver.NewVersion(rele.GetTagName())
+		if err != nil {
+			return false, errors.Wrapf(err, "invalid original version. formula: %s", fo.fname)
+		}
 	}
 	if !origVer.LessThan(newVer) {
 		return false, nil

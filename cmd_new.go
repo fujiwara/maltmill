@@ -74,6 +74,7 @@ func getDownloads(assets []github.ReleaseAsset) ([]formulaDownload, error) {
 	var downloads []formulaDownload
 	for _, asset := range assets {
 		u := asset.GetBrowserDownloadURL()
+		log.Println("getting", u)
 		fname := path.Base(u)
 		if !strings.Contains(fname, "amd64") {
 			continue
